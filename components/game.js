@@ -1,7 +1,7 @@
 import {  Box, Heading, Text, Input, Button } from '@chakra-ui/react'
 
 // react 
-import React, { useState,useRef,useEffect } from 'react'
+import { useState,useRef,useEffect } from 'react'
 
 
 function Game() {
@@ -12,6 +12,7 @@ function Game() {
     const [gameDone,setGameDone] = useState(false)
     const [secondsLeft,setSecondsLeft] = useState(10)
     const [gameLost,setGameLost] = useState(false)
+    const [timeInterval,setTimeInterval] = useState(null)
 
     const inputVal = useRef(0);
 
@@ -30,67 +31,65 @@ function Game() {
 
     const checkAttempt = ()=>{
         if(inputVal.current.value != ""){
-            const attempt = inputVal.current.value
-            const newGoal = ((attempt/questions[currentQuest].revenueInBillions)*100).toFixed(1) + score
+            const attempt = Number(inputVal.current.value)
+            const newGoal = Math.floor((Math.abs(Number(questions[currentQuest].revenueInBillions) - attempt)/questions[currentQuest].revenueInBillions)*100) + score
             setScore(newGoal)
             inputVal.current.value = ""
             if(currentQuest+1 === questions.length){
                 setGameDone(true)
-                setCurrentQuest(0)
+                clearInterval(timeInterval)
             }else{
                 setCurrentQuest(currentQuest+1)
                 setSecondsLeft(10)
+                setTimeInterval(startTimer())
             }
-            startTimer()
         }
     }
 
     const handleKeyPress = (e)=>{
-        if(e.code === "Enter"){
+        if(e.code === "Enter" && !gameDone){
             checkAttempt()
         }
     }
 
     const newGame = ()=>{
-        // get 10 new questions 
+        setScore(0)
+        setCurrentQuest(0)
+        setGameDone(false)
+        setGameLost(false)
+        setSecondsLeft(10)
+        setTimeInterval(null)
     }
+
 
     const startTimer = ()=>{
         const timeLeft = secondsLeft;
-        let inter = setInterval(()=>{
+        const inter = setInterval(()=>{
             if(timeLeft === 0){
-                clearInterval(inter)
                 setGameLost(true)
+                clearInterval(inter)
             }else{
                 timeLeft--;
                 setSecondsLeft(timeLeft)
             }
         },1000);
+        return inter;
     }
 
-    if(gameDone && !gameLost){
-        return (
-            <Box w="100%" maxW="500px" padding=".5rem">
-            <Box>
-                <Box border="1px" borderColor="#dfb55e" display="flex" flexDirection="column" alignItems="center" justifyContent="ce" borderRadius="2xl" padding=".5rem" marginBottom=".5rem" >
-                    <Heading marginBottom=".5rem" fontSize={{ base: '24px', md: '28px', lg: '36px' }}>Final score: {score}</Heading>
-                    <Button width="100%" marginBottom=".5rem" bg="#dfb55e" _hover={{ bg: "#ffffff", color:"#dfb55e",border:"1px",borderColor:"#dfb55e" }}> new game </Button>
-                </Box>
-            </Box>
-            </Box>
-        )
-    }else if(gameLost){
+    console.log(secondsLeft)
+
+    if(gameLost){
         return (
             <Box w="100%" maxW="500px" padding=".5rem">
             <Box>
                 <Box border="1px" borderColor="#dfb55e" display="flex" flexDirection="column" alignItems="center" justifyContent="ce" borderRadius="2xl" padding=".5rem" marginBottom=".5rem" >
                     <Heading marginBottom=".5rem" fontSize={{ base: '24px', md: '28px', lg: '36px' }}>You Lost</Heading>
-                    <Button width="100%" marginBottom=".5rem" bg="#dfb55e" _hover={{ bg: "#ffffff", color:"#dfb55e",border:"1px",borderColor:"#dfb55e" }}> new game </Button>
+                    <Button width="100%" marginBottom=".5rem" bg="#dfb55e" _hover={{ bg: "#ffffff", color:"#dfb55e",border:"1px",borderColor:"#dfb55e" }} onClick={newGame}> new game </Button>
                 </Box>
             </Box>
             </Box>
         )
-    }else{
+    }else if(!gameDone){
         return (
             <Box w="100%" maxW="500px" padding=".5rem">
             <Box>
@@ -99,9 +98,20 @@ function Game() {
                 </Box>
                 <Box border="1px" borderColor="#dfb55e" display="flex" flexDirection="column" alignItems="center" justifyContent="ce" borderRadius="2xl" padding=".5rem" marginBottom=".5rem" >
                     <Heading marginBottom=".5rem" fontSize={{ base: '24px', md: '28px', lg: '36px' }}>{(questions[currentQuest])?(questions[currentQuest].name):("")}</Heading>
-                    <Input ref={inputVal} onKeyPress={handleKeyPress} placeholder="revenue of apple in billions" textAlign="center" marginBottom=".5rem" borderColor="gray.200" type="number"></Input>
+                    <Input ref={inputVal} onKeyPress={handleKeyPress} placeholder={`revenue in billions`} textAlign="center" marginBottom=".5rem" borderColor="gray.200" type="number"></Input>
                     <Button width="100%" marginBottom=".5rem" bg="#dfb55e" _hover={{ bg: "#ffffff", color:"#dfb55e",border:"1px",borderColor:"#dfb55e" }} onClick={()=>{checkAttempt(Number(inputVal.current.value))}} >next</Button>
                     <Text color="#858585" fontSize={{ base: '12px', md: '14px', lg: '16px' }}>{currentQuest} of 9</Text>
+                </Box>
+            </Box>
+            </Box>
+        )
+    }else{
+        return (
+            <Box w="100%" maxW="500px" padding=".5rem">
+            <Box>
+                <Box border="1px" borderColor="#dfb55e" display="flex" flexDirection="column" alignItems="center" justifyContent="ce" borderRadius="2xl" padding=".5rem" marginBottom=".5rem" >
+                    <Heading marginBottom=".5rem" fontSize={{ base: '24px', md: '28px', lg: '36px' }}>Final score: {score}</Heading>
+                    <Button width="100%" marginBottom=".5rem" bg="#dfb55e" _hover={{ bg: "#ffffff", color:"#dfb55e",border:"1px",borderColor:"#dfb55e" }} onClick={newGame}> new game </Button>
                 </Box>
             </Box>
             </Box>
