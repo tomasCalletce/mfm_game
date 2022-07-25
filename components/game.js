@@ -12,7 +12,8 @@ function Game() {
     const [gameDone,setGameDone] = useState(false)
     const [secondsLeft,setSecondsLeft] = useState(10)
     const [gameLost,setGameLost] = useState(false)
-    const [timeInterval,setTimeInterval] = useState(null)
+    const [timeIntervalID,setTimeIntervalID] = useState(0)
+    const [userAnswers,setUserAnswers] = useState([])
 
     const inputVal = useRef(0);
 
@@ -25,6 +26,10 @@ function Game() {
             {
                 name : "Amazon",
                 revenueInBillions : 490
+            },
+            {
+                name : "Walmart",
+                revenueInBillions : 550
             }
         ])
     },[])
@@ -35,13 +40,15 @@ function Game() {
             const newGoal = Math.floor((Math.abs(Number(questions[currentQuest].revenueInBillions) - attempt)/questions[currentQuest].revenueInBillions)*100) + score
             setScore(newGoal)
             inputVal.current.value = ""
+            clearInterval(timeIntervalID)
             if(currentQuest+1 === questions.length){
                 setGameDone(true)
-                clearInterval(timeInterval)
+                setUserAnswers(userAnswers => [...userAnswers,attempt])
             }else{
+                setUserAnswers(userAnswers => [...userAnswers,attempt])
                 setCurrentQuest(currentQuest+1)
                 setSecondsLeft(10)
-                setTimeInterval(startTimer())
+                startTimer()
             }
         }
     }
@@ -57,33 +64,41 @@ function Game() {
         setCurrentQuest(0)
         setGameDone(false)
         setGameLost(false)
+        setUserAnswers([])
         setSecondsLeft(10)
-        setTimeInterval(null)
+        setTimeIntervalID(0)
     }
-
 
     const startTimer = ()=>{
-        const timeLeft = secondsLeft;
-        const inter = setInterval(()=>{
-            if(timeLeft === 0){
-                setGameLost(true)
-                clearInterval(inter)
-            }else{
-                timeLeft--;
-                setSecondsLeft(timeLeft)
-            }
-        },1000);
-        return inter;
+        const id = setInterval(() => {
+            setSecondsLeft((secondsLeft)=> {
+                if(secondsLeft === 0){
+                    setGameLost(true)
+                    clearInterval(id)
+                    return 10
+                }
+                return secondsLeft - 1
+            })
+        }, 1000,);
+        setTimeIntervalID(id)
     }
 
-    console.log(secondsLeft)
+    const gameSummary = ()=>{
+        let index = -1;
+        return userAnswers.map((attempt)=>{
+            index++;
+            return (<Text key={index}>correct : {questions[index].revenueInBillions} --- you : {attempt} </Text>)
+        })
+    }
 
     if(gameLost){
+        const review = gameSummary()
         return (
             <Box w="100%" maxW="500px" padding=".5rem">
             <Box>
                 <Box border="1px" borderColor="#dfb55e" display="flex" flexDirection="column" alignItems="center" justifyContent="ce" borderRadius="2xl" padding=".5rem" marginBottom=".5rem" >
                     <Heading marginBottom=".5rem" fontSize={{ base: '24px', md: '28px', lg: '36px' }}>You Lost</Heading>
+                    {review}
                     <Button width="100%" marginBottom=".5rem" bg="#dfb55e" _hover={{ bg: "#ffffff", color:"#dfb55e",border:"1px",borderColor:"#dfb55e" }} onClick={newGame}> new game </Button>
                 </Box>
             </Box>
@@ -106,11 +121,14 @@ function Game() {
             </Box>
         )
     }else{
+        const review = gameSummary()
         return (
             <Box w="100%" maxW="500px" padding=".5rem">
             <Box>
                 <Box border="1px" borderColor="#dfb55e" display="flex" flexDirection="column" alignItems="center" justifyContent="ce" borderRadius="2xl" padding=".5rem" marginBottom=".5rem" >
                     <Heading marginBottom=".5rem" fontSize={{ base: '24px', md: '28px', lg: '36px' }}>Final score: {score}</Heading>
+                    {review}
+                    <Text fontWeight="bold" mt=".5rem">the closer you are to 0 the better</Text>
                     <Button width="100%" marginBottom=".5rem" bg="#dfb55e" _hover={{ bg: "#ffffff", color:"#dfb55e",border:"1px",borderColor:"#dfb55e" }} onClick={newGame}> new game </Button>
                 </Box>
             </Box>
