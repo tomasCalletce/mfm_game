@@ -1,7 +1,16 @@
-import {  Box, Heading, Text, Input, Button } from '@chakra-ui/react'
+import {  Box, Heading, Text, Input, Button, Link } from '@chakra-ui/react'
 
 // react 
 import { useState,useRef,useEffect } from 'react'
+
+
+async function getServerSideProps(){
+
+
+    //return { props: { data : parsedData } }
+}
+
+
 
 
 function Game() {
